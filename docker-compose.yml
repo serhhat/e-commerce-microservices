@@ -4,6 +4,7 @@ services:
   api-gateaway:
     build: ./api-gateaway
     container_name: api-gateaway
+    platform: linux/amd64
     ports:
       - "8080:8080"
     depends_on:
@@ -16,8 +17,9 @@ services:
   product-service:
     build: ./product-service
     container_name: product-service
+    platform: linux/amd64
     ports:
-    - "8081:8080"
+      - "8081:8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/productdb
@@ -37,6 +39,7 @@ services:
   order-service:
     build: ./order-service
     container_name: order-service
+    platform: linux/amd64
     ports:
       - "8082:8080"
     environment:
@@ -57,8 +60,9 @@ services:
   payment-service:
     build: ./payment-service
     container_name: payment-service
+    platform: linux/amd64
     ports:
-    - "8083:8080"
+      - "8083:8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/paymentdb?createDatabaseIfNotExist=true&useSSL=false
@@ -70,43 +74,46 @@ services:
       KAFKA_TOPIC: payment-events
       KAFKA_GROUP_ID: payment-group
     depends_on:
-        - mysql
-        - redis
-        - kafka
+      - mysql
+      - redis
+      - kafka
 
   # Customer Service
   customer-service:
     build: ./customer-service
     container_name: customer-service
+    platform: linux/amd64
     ports:
-    - "8084:8080"
+      - "8084:8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
       MONGO_URI: mongodb://mongo:27017
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-    - mongo
-    - redis
+      - mongo
+      - redis
 
   # Notification Service
   notification-service:
     build: ./notification-service
     container_name: notification-service
+    platform: linux/amd64
     ports:
-    - "8085:8080"
+      - "8085:8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: payment-events
       KAFKA_GROUP_ID: payment-group
     depends_on:
-    - kafka
+      - kafka
 
   # Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
+    platform: linux/amd64
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -115,13 +122,14 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka
+    platform: linux/amd64
     ports:
       - "9092:9092"
     depends_on:
       - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://localhost:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -131,6 +139,7 @@ services:
   # Kafka UI
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
+    platform: linux/amd64
     ports:
       - "9093:8080"
     links:
@@ -146,6 +155,7 @@ services:
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v2.40.0
+    platform: linux/amd64
     ports:
       - "9090:9090"
     volumes:
@@ -155,6 +165,7 @@ services:
   grafana:
     container_name: grafana
     image: grafana/grafana-oss:latest
+    platform: linux/amd64
     ports:
       - "3000:3000"
     environment:
@@ -162,18 +173,20 @@ services:
 
   # Postgres
   postgres:
-      image: postgres:latest
-      container_name: postgres
-      ports:
+    image: postgres:latest
+    container_name: postgres
+    platform: linux/amd64
+    ports:
       - "5432:5432"
-      environment:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: productdb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: productdb
 
   # MySQL
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0
+    platform: linux/amd64
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: orderdb
@@ -182,61 +195,66 @@ services:
 
   # MongoDB
   mongo:
-      image: mongo:4.4.6
-      container_name: mongo
-      ports:
+    image: mongo:6.0
+    container_name: mongo
+    platform: linux/amd64
+    ports:
       - "27017:27017"
-      environment:
-        MONGO_INITDB_ROOT_USERNAME: root
-        MONGO_INITDB_ROOT_PASSWORD: root
-        MONGO_INITDB_DATABASE: customerdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: customerdb
 
   # Redis Cache
   redis:
     image: redis:latest
     container_name: redis
+    platform: linux/amd64
     ports:
       - "6379:6379"
 
   # Elasticsearch
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2-amd64
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
     container_name: elasticsearch
+    platform: linux/amd64
     ports:
-    - "9200:9200"
-    - "9300:9300"
+      - "9200:9200"
+      - "9300:9300"
     environment:
-    - discovery.type=single-node
-    - cluster.name=elasticsearch
-    - bootstrap.memory_lock=true
-    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    - xpack.security.enabled=false
+      - discovery.type=single-node
+      - cluster.name=elasticsearch
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
 
   # Logstash
   logstash:
-      image: docker.elastic.co/logstash/logstash:8.6.2-amd64
-      container_name: logstash
-      ports:
+    image: docker.elastic.co/logstash/logstash:8.6.2
+    container_name: logstash
+    platform: linux/amd64
+    ports:
       - "5044:5044"
       - "5000:5000/tcp"
       - "5000:5000/udp"
       - "9600:9600"
-      volumes:
+    volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
-      environment:
-        LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-      depends_on:
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
       - elasticsearch
 
   # Kibana
   kibana:
-        image: docker.elastic.co/kibana/kibana:8.6.2-amd64
-        container_name: kibana
-        ports:
-        - "5601:5601"
-        environment:
-          ELASTICSEARCH_URL: http://elasticsearch:9200
-          ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
-        depends_on:
-        - elasticsearch
+    image: docker.elastic.co/kibana/kibana:8.6.2
+    container_name: kibana
+    platform: linux/amd64
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    depends_on:
+      - elasticsearch
